@@ -37,16 +37,16 @@ Date dateEnd;
 Calendar calendar;
 
 PImage[] faces;
-int nFaces = 100; // up to 1000
+int nFaces = 10; // up to 1000
 
 int updateTimer = 0;
-int updateTime = 1000; //update time in ms
+int updateTime = 100; //update time in ms
 
 void setup() {
   size(500, 400);
   ellipseMode(CENTER);
   background(255);
-  frameRate(2.0);
+  frameRate(30.0);
 
   timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   urlTimestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH'%3A'mm");
@@ -95,7 +95,7 @@ void setup() {
 }
 
 void draw() {
-  fill(255,255,255,10);
+  fill(0,0,0,50);
   noStroke();
   int x1 = 100;
   int y1 = 100;
@@ -137,14 +137,6 @@ void draw() {
     }
     //nPeople = max(0, nPeople + pIn - pOut);
   
-    fill(0, 0, 255);
-    //pack2();
-    pack2(x1,y1,x2,y2);
-  
-    textSize(20);
-    fill(0);
-    text(crntTimestamp, 10, height-20);
-    text(people.size(), width-40, height-20);
   
     calendar.add(Calendar.MINUTE, 5);
     crntTimestamp = timestampFormat.format(calendar.getTime());
@@ -154,6 +146,14 @@ void draw() {
     }
     updateTimer = millis();
   }
+        
+    //pack2();
+    pack2(x1,y1,x2,y2);
+
+    textSize(20);
+    fill(0);
+    text(crntTimestamp, 10, height-20);
+    text(people.size(), width-40, height-20);
 }
 
 void pack(float n) {
