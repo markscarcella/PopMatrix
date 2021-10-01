@@ -24,6 +24,10 @@ String[][] peopleSensors = {
   {"CB11.PC10.30", "CB11.09.CR11"}, 
   {"CB11.PC00.06.West", "CB11.00.Wattle"}, 
 };
+
+String[] windDirectionSensor = {"weather","WD"};
+String[] windSpeedSensor = {"weather","IWS"};
+
 String startTimestamp = "2020-12-01 05:00:00";
 String endTimestamp = "2020-12-31 05:00:00";
 
@@ -34,19 +38,41 @@ SimpleDateFormat timestampFormat;
 SimpleDateFormat urlTimestampFormat;
 Date dateStart;
 Date dateEnd;
-Calendar calendar;
+Calendar peopleCalendar;
+Calendar windCalendar;
 
 PImage[] faces;
 int nFaces = 10; // up to 1000
 
 int updateTimer = 0;
-int updateTime = 100; //update time in ms
+int updateTime = 2000; //update time in ms
+
+PImage building;
+PImage logo;
+color bg;
+
+int nSwirls = 1000;
+WindSwirl[] wind;
+Table windDirection;
+Table windSpeed;
+int windMinOffset = 3;
+int windSecOffset = 14;
+String crntWindTimestamp;
+float wd, ws;
 
 void setup() {
-  size(500, 400);
+ size(1200, 800);
+ frameRate(120);
+ rectMode(CORNER);
+ //colorMode(HSB, height, height, height);
+ 
+  //pg = createGraphics(1200, 800);
+  building = loadImage("building_white.png");
+  logo = loadImage("logo.png");
+  
   ellipseMode(CENTER);
   background(255);
-  frameRate(30.0);
+  //frameRate(30.0);
 
   timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   urlTimestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH'%3A'mm");
@@ -60,15 +86,21 @@ void setup() {
     e.printStackTrace();
   }
 
-  calendar = Calendar.getInstance();
+  peopleCalendar = Calendar.getInstance();
 
-  calendar.setTime(dateEnd);
-  urlEndTimestamp = urlTimestampFormat.format(calendar.getTime());
+  peopleCalendar.setTime(dateEnd);
+  urlEndTimestamp = urlTimestampFormat.format(peopleCalendar.getTime());
 
-  calendar.setTime(dateStart);
-  urlStartTimestamp = urlTimestampFormat.format(calendar.getTime());
-  crntTimestamp = timestampFormat.format(calendar.getTime());  
-
+  peopleCalendar.setTime(dateStart);
+  urlStartTimestamp = urlTimestampFormat.format(peopleCalendar.getTime());
+  crntTimestamp = timestampFormat.format(peopleCalendar.getTime());  
+  
+  windCalendar = Calendar.getInstance();
+  windCalendar.setTime(dateStart);
+  windCalendar.add(Calendar.MINUTE, windMinOffset);
+  windCalendar.add(Calendar.SECOND, windSecOffset);
+  crntWindTimestamp = timestampFormat.format(windCalendar.getTime());
+  
   peopleIn = new Table[peopleSensors.length];
   peopleOut = new Table[peopleSensors.length];
 
@@ -82,7 +114,56 @@ void setup() {
       continue;
     }
   }
+  windDirection = loadTable("https://eif-research.feit.uts.edu.au/api/csv/?rFromDate="+urlStartTimestamp+"&rToDate="+urlEndTimestamp+"&rFamily="+windDirectionSensor[0]+"&rSensor="+windDirectionSensor[1], "csv");
+  for (int i=0; i<windDirection.getRowCount(); i++) {
+    Date windDirTime = new Date();
+    String windTimestamp = windDirection.getString(i,0);
+    try {
+      windDirTime = timestampFormat.parse(windTimestamp);
+    } catch (ParseException e) {
+    e.printStackTrace();    
+    }
+    // map timestamps to nearest 5 minutes
+    windCalendar.setTime(windDirTime);
+    int unroundedMinutes = windCalendar.get(Calendar.MINUTE);
+    int mod = unroundedMinutes % 5;
+    windCalendar.add(Calendar.MINUTE, mod < 3 ? -mod : (5-mod));
+    windCalendar.set(Calendar.SECOND,0);
+    windDirection.setString(i,0,timestampFormat.format(windCalendar.getTime()));
 
+  }
+    
+  windSpeed = loadTable("https://eif-research.feit.uts.edu.au/api/csv/?rFromDate="+urlStartTimestamp+"&rToDate="+urlEndTimestamp+"&rFamily="+windSpeedSensor[0]+"&rSensor="+windSpeedSensor[1], "csv");
+  for (int i=0; i<windSpeed.getRowCount(); i++) {
+    Date windSpeedTime = new Date();
+    String windTimestamp = windDirection.getString(i,0);
+    try {
+      windSpeedTime = timestampFormat.parse(windTimestamp);
+    } catch (ParseException e) {
+    e.printStackTrace();    
+    }
+    
+    // map timestamps to nearest 5 minutes
+    windCalendar.setTime(windSpeedTime);
+    int unroundedMinutes = windCalendar.get(Calendar.MINUTE);
+    int mod = unroundedMinutes % 5;
+    windCalendar.add(Calendar.MINUTE, mod < 3 ? -mod : (5-mod));
+    windCalendar.set(Calendar.SECOND,0);
+    windSpeed.setString(i,0,timestampFormat.format(windCalendar.getTime()));
+
+  }
+  wind = new WindSwirl[nSwirls];
+  for (int i=0; i<nSwirls; i++) {    
+    wind[i] = new WindSwirl(
+      random(width), // x position
+      random(height), // y position
+      20, // wind width
+      20, // wind height
+      0, // x speed
+      0, // y speed
+      0); // wind data used to change direction of objects
+  }
+  
   people = new ArrayList<PImage>();
   faces = new PImage[nFaces];
   PImage maskImage = loadImage("mask.png");
@@ -95,15 +176,16 @@ void setup() {
 }
 
 void draw() {
-  fill(0,0,0,50);
+  fill(255,255,255,10);
+
+  
   noStroke();
-  int x1 = 100;
-  int y1 = 100;
-  int x2 = 400;
-  int y2 = 300;
+  int x1 = 120;
+  int y1 = 320;
+  int x2 = 1020;
+  int y2 = height-20;
   rect(0, 0, width, height);
   //rect(x1, y1, width-x2, height-y2);
-
   if (millis() - updateTimer > updateTime) {
         
     int pIn = 0;
@@ -135,25 +217,80 @@ void draw() {
         }
       }
     }
-    //nPeople = max(0, nPeople + pIn - pOut);
-  
-  
-    calendar.add(Calendar.MINUTE, 5);
-    crntTimestamp = timestampFormat.format(calendar.getTime());
+    
+    
+      TableRow windDir = windDirection.findRow(crntTimestamp,0);
+      if (windDir != null) {
+        wd = windDir.getFloat(1);
+      }
+      TableRow windSp = windSpeed.findRow(crntTimestamp,0);
+      if (windSp != null) {
+        ws = windSp.getFloat(1); 
+    
+    }
+
+    peopleCalendar.add(Calendar.MINUTE, 5);
+ //   windCalendar.add(Calendar.MINUTE, 5);
+    crntTimestamp = timestampFormat.format(peopleCalendar.getTime());
     if (crntTimestamp.compareTo(endTimestamp) == 0) {
       crntTimestamp = startTimestamp;
-      calendar.setTime(dateStart);
+      peopleCalendar.setTime(dateStart);
+      
+      //windCalendar.setTime(dateStart);
+      //windCalendar.add(Calendar.MINUTE, windMinOffset);
+      //windCalendar.add(Calendar.SECOND, windSecOffset);
+      //crntWindTimestamp = timestampFormat.format(windCalendar.getTime());
     }
+
     updateTimer = millis();
   }
         
+    println(wd);
+    for (int i = 0; i < wind.length; i++) {
+      //if (wd > 180) {
+      //  wind[i].windDirectData = 0.01;
+      //} else {
+      //  wind[i].windDirectData = -0.01;
+      //}
+      wind[i].windDirectData = map(wd,0,360,-0.01,0.01);
+      wind[i].xSpeed = ws;
+      wind[i].ySpeed = 0;
+      wind[i].move();
+      wind[i].display();
+    }
+    //trail(); // function to add trail effect
+
+  
+  //bg = color(map(mouseY,0,height,0,100), height,height);
+  
+  //fill(255,255,255,10);
+  //rect(0, 0, width, height);
+  
+  
+  //fill(height);
+  //noStroke();
+  // draw the things in the background here
+  //for (int i = 0; i < 5; i++)
+  //{
+  //  ellipse(random(width), random(height), 60, 60);
+  //}
+  
+  // add the building shape
+  //tint(bg);
+  image(building,0,0);
+  // add the logo
+  //noTint();
+  image(logo,900,210);
+  
     //pack2();
     pack2(x1,y1,x2,y2);
-
+  //-------
     textSize(20);
     fill(0);
     text(crntTimestamp, 10, height-20);
     text(people.size(), width-40, height-20);
+    
+    
 }
 
 void pack(float n) {
@@ -272,4 +409,69 @@ int[] getClosestFactors(float n, float delta) {
   }
   int[] result = {f1, f2};
   return result;
+}
+
+
+class WindSwirl {
+  color c;
+  float xPos;
+  float yPos;
+  float swirlWidth;
+  float swirlHeight;
+  float ySpeed;
+  float xSpeed;
+  float windDirectData;
+  float theta = random(-1, 1);  //angle of rotation of WindSwirls
+  float xRot;
+  float yRot;
+  
+  WindSwirl(float _xPos, float _yPos, float _swirlWidth, float _swirlHeight, float _xSpeed, float _ySpeed, float _windDirectData) {
+    c = color(0, 0, random(0, 255));
+    xPos = _xPos;
+    yPos = _yPos;
+    swirlWidth = _swirlWidth;
+    swirlHeight = _swirlHeight;
+    ySpeed = _ySpeed;
+    xSpeed = _xSpeed;
+    windDirectData = _windDirectData;
+    xRot = xPos+random(0,100);
+    yRot = yPos+random(0,100);
+  }
+
+  void display() {
+    pushMatrix();                          
+    translate(xRot,yRot);
+    rotate(theta);
+    fill(255,255,255);
+    fill(c);
+    ellipse(xPos-xRot, yPos-yRot, swirlWidth, swirlHeight); // draw wind     
+    popMatrix();  
+    theta += windDirectData * xSpeed;
+  
+    //theta = windDirectData;
+  //trying to get theta to go clockwise and anticlockwise
+ // if(theta > 0) theta -= 0.02; 
+ // if(theta < 0) theta += 0.02;
+  
+  }
+
+  void move () {
+    //xPos = xPos + xSpeed;
+    //yPos = yPos + ySpeed;
+    if (xPos > width+swirlHeight) xPos = 0;
+    if (xPos < 0) xPos = width;
+    if (yPos > height+swirlWidth) yPos = 0;
+    if (yPos < 0) yPos = height;
+  }
+}
+
+void trail () {
+  pushMatrix();
+  pushStyle();
+  translate(0, 0);
+  noStroke();
+  fill(255, 255, 255, 10);
+  rect(0, 0, width, height);
+  popStyle();
+  popMatrix();
 }
