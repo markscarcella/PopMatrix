@@ -45,7 +45,7 @@ PImage[] faces;
 int nFaces = 10; // up to 1000
 
 int updateTimer = 0;
-int updateTime = 2000; //update time in ms
+int updateTime = 500; //update time in ms
 
 PImage building;
 PImage logo;
@@ -285,12 +285,22 @@ void draw() {
     //pack2();
     pack2(x1,y1,x2,y2);
   //-------
+  // text("Press i for Info", width/2, height/2);
+  
+   if (keyPressed) {
+   if (key == 'i') {
     textSize(20);
-    fill(0);
-    text(crntTimestamp, 10, height-20);
-    text(people.size(), width-40, height-20);
-    
-    
+    fill(0); //we need to set a variable to be able to change the colour of the text relative to the colour of the building
+    text("Date & Time:", 170, height-50);
+    text(crntTimestamp, 120, height-20);
+    text("People inside:", width-300, height-50);
+    text(people.size(), width-240, height-20);
+    text("Wind Speed:", width/2-150, height-50);
+    text(ws, width/2-120, height-20);
+    text("Wind Direction:", width/2+50, height-50);
+    text(wd, width/2+80, height-20);
+    }
+   }
 }
 
 void pack(float n) {
