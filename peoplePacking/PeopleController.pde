@@ -24,7 +24,7 @@ class PeopleController {
 
 
   PImage[] faces;
-  int nFaces = 10; // up to 1000
+  int nFaces = 20; // up to 1000
   
   String urlStartTimestamp, urlEndTimestamp;
 

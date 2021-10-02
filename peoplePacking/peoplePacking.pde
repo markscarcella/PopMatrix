@@ -42,7 +42,7 @@ Calendar peopleCalendar;
 Calendar windCalendar;
 
 PImage[] faces;
-int nFaces = 10; // up to 1000
+int nFaces = 20; // up to 1000
 
 int updateTimer = 0;
 int updateTime = 500; //update time in ms
@@ -178,6 +178,12 @@ void setup() {
 void draw() {
   fill(255,255,255,10);
 
+  // loading message
+  textSize(28);
+  String loadText = "Loading, please wait";
+  float tW = textWidth(loadText);
+  fill(0);
+  text(loadText, width/2-tW/2, height/2);
   
   noStroke();
   int x1 = 120;
