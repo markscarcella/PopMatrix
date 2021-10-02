@@ -15,7 +15,8 @@ class SoundController {
   float people = 0.0;
   
   String path = "/Volumes/GoogleDrive-111619245810311207262/My Drive/2021/IM/Assignment2/PopMatrix/assignment2/data/music/";
-
+  //String path = "/Users/andrewwagstaffe/Desktop/Masters/Interactive Media/Assessments/Popmatrix/PopMatrix/assignment2/data/music/"; // Andrew's testing path
+  
   SoundController() {
     ac = new AudioContext();
 
