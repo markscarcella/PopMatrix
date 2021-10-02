@@ -114,8 +114,13 @@ void draw() {
 
   if (keyPressed) {
    if (key == ' ') {
-    updateTime = int(map(ic.loudness.analyze(),0,0.3,1000,10));
+    updateTime = int(map(ic.loudness.analyze(),0,0.5,1000,10));
+    if (updateTime < 10) {
+      updateTime = 10;
+    }
     sc.setRate(map(updateTime,10,1000,1.5,1)); 
+    fill(255,255,255,100);
+    text("Time going at "+int(100000./updateTime)+"%", 0.5*width, height - 20);
    }  
    else if (key == 'i') {
     fill(255); //we need to set a variable to be able to change the colour of the text relative to the colour of the building
@@ -147,11 +152,11 @@ void draw() {
    } 
   }
   else {
+    fill(0,0,0,100);
+    text("Hold i for info...", 0.1*width, 30);
     fill(255,255,255,100);
-    text("Press i for info...", 0.1*width, 30);
+    text("Hold space and sing to speed up time...", 0.5*width, height - 20);
   }
-  fill(255,255,255,200);
-  text("Hold space and sing to speed up time...", 0.5*width, height - 20);
 }
 
 void keyReleased() {
