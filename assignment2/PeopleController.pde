@@ -23,7 +23,7 @@ class PeopleController {
   ArrayList<PImage> people;
 
   PImage[] faces;
-  int nFaces = 10; // up to 1000
+  int nFaces = 300; // up to 1000
 
   String urlStartTimestamp, urlEndTimestamp;
 
@@ -81,7 +81,7 @@ class PeopleController {
       TableRow in = peopleIn[i].findRow(crntTimestamp, 0);
       if (in != null) {
         pIn = in.getInt(1);
-        println(crntTimestamp, peopleSensors[i][0], "IN", pIn);
+        //println(crntTimestamp, peopleSensors[i][0], "IN", pIn);
         for (int iIn=0; iIn<pIn; iIn++) {
           people.add(faces[int(random(faces.length-1))]);
         }
@@ -89,7 +89,7 @@ class PeopleController {
       TableRow out = peopleOut[i].findRow(crntTimestamp, 0);
       if (out != null) {
         pOut = out.getInt(1);
-        println(crntTimestamp, peopleSensors[i][0], "OUT", pOut);
+        //println(crntTimestamp, peopleSensors[i][0], "OUT", pOut);
         for (int iOut=0; iOut<pOut; iOut++) {
           if (people.size() > 0) {
             people.remove(int(random(people.size()-1)));
@@ -97,6 +97,7 @@ class PeopleController {
         }
       }
     }
+    nPeople = people.size();
   }
 
   void display() {

@@ -11,18 +11,18 @@ class WeatherController {
   String[] temperatureSensor = {"weather", "AT"};
 
   Table windDirectionData, windSpeedData, temperatureData;
-  
+
   Wind[] wind;
   int nParticles;
   float windDirection;
   float windSpeed;
   float temperature;
-  
+
 
   WeatherController(String _urlStartTimestamp, String _urlEndTimestamp, int nParticles, int windSize) {
     urlStartTimestamp = _urlStartTimestamp;
     urlEndTimestamp = _urlEndTimestamp;
- 
+
     wind = new Wind[nParticles];
     for (int i=0; i<nParticles; i++) {    
       wind[i] = new Wind(
@@ -30,9 +30,9 @@ class WeatherController {
         random(height/2), // y position
         windSize, // wind width
         color(0, 0, random(0, 255))
-        ); 
+        );
     }
-    
+
     loadData();
   }
 
@@ -44,7 +44,7 @@ class WeatherController {
 
     SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Calendar weatherCalendar = Calendar.getInstance();
-    
+
     // remap windDirection timestamps to the 0,5,10,15,...
     for (int i=0; i<windDirectionData.getRowCount(); i++) {
       Date windDirTime = new Date();
@@ -80,7 +80,7 @@ class WeatherController {
       weatherCalendar.set(Calendar.SECOND, 0);
       windSpeedData.setString(i, 0, timestampFormat.format(weatherCalendar.getTime()));
     }
-    
+
     // remap windSpeed timestamps to the 0,5,10,15,...
     for (int i=0; i<temperatureData.getRowCount(); i++) {
       Date temperatureTime = new Date();
@@ -100,35 +100,33 @@ class WeatherController {
     }
   }
 
-    void update (String crntTimestamp) {
+  void update (String crntTimestamp) {
 
-      TableRow windDirectionRow = windDirectionData.findRow(crntTimestamp, 0);
-      if (windDirectionRow != null) {
-        windDirection = windDirectionRow.getFloat(1);
-      }
-      TableRow windSpeedRow = windSpeedData.findRow(crntTimestamp, 0);
-      if (windSpeedRow != null) {
-        windSpeed = windSpeedRow.getFloat(1);
-      }
-      
-      for (int i=0; i<wind.length; i++) {
-         wind[i].update(windDirection, windSpeed); 
-      }
-      
-      TableRow temperatureRow = temperatureData.findRow(crntTimestamp, 0);
-      if (temperatureRow != null) {
-        temperature = temperatureRow.getFloat(1);
-      }
+    TableRow windDirectionRow = windDirectionData.findRow(crntTimestamp, 0);
+    if (windDirectionRow != null) {
+      windDirection = windDirectionRow.getFloat(1);
+    }
+    TableRow windSpeedRow = windSpeedData.findRow(crntTimestamp, 0);
+    if (windSpeedRow != null) {
+      windSpeed = windSpeedRow.getFloat(1);
+    }
+
+    TableRow temperatureRow = temperatureData.findRow(crntTimestamp, 0);
+    if (temperatureRow != null) {
+      temperature = temperatureRow.getFloat(1);
     }
     
-    void display() {
-      for (int i=0; i<wind.length; i++) {
-         wind[i].display(); 
-      }
-
+    for (int i=0; i<wind.length; i++) {
+      wind[i].update(windDirection, windSpeed, temperature);
     }
   }
 
+  void display() {
+    for (int i=0; i<wind.length; i++) {
+      wind[i].display();
+    }
+  }
+}
 
 class Wind {
   color c;
@@ -149,25 +147,26 @@ class Wind {
     xRot = xPos+random(0, 100);
     yRot = yPos+random(0, 100);
   }
-  
-  void update(float _windDirection, float _windSpeed) {
+
+  void update(float _windDirection, float _windSpeed, float _temperature) {
     windDirection = map(_windDirection, 0, 360, -0.01, 0.01);
-    windSpeed = map(_windSpeed, 0, 20, 0, 100);     
+    windSpeed = map(_windSpeed, 0, 20, 0, 100);
+    c = color(255,255,map(_temperature, 35, 15, 0, 200)+random(50));
   }
-  
+
   void display() {
-      pushMatrix();                          
-      translate(xRot, yRot);
-      rotate(theta);
-      fill(255, 255, 255);
-      fill(c);
-      ellipse(xPos-xRot, yPos-yRot, windSize, windSize); // draw wind     
-      popMatrix();  
-      theta += windDirection * windSpeed;
-      
-      if (xPos > width+windSize) xPos = 0;
-      if (xPos < 0) xPos = width;
-      if (yPos > height+windSize) yPos = 0;
-      if (yPos < 0) yPos = height;
+    pushMatrix();                          
+    translate(xRot, yRot);
+    rotate(theta);
+    fill(255, 255, 255);
+    fill(c);
+    ellipse(xPos-xRot, yPos-yRot, windSize, windSize); // draw wind     
+    popMatrix();  
+    theta += windDirection * windSpeed;
+
+    if (xPos > width+windSize) xPos = 0;
+    if (xPos < 0) xPos = width;
+    if (yPos > height+windSize) yPos = 0;
+    if (yPos < 0) yPos = height;
   }
 }

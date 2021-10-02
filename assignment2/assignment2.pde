@@ -6,12 +6,10 @@ import java.text.*;
 SoundController sc;
 PeopleController pc;
 WeatherController wc;
-
-int nc, nf, nx, ny;
+InputController ic;
 
 String startTimestamp = "2020-12-08 05:00:00";
 String endTimestamp = "2020-12-31 05:00:00";
-
 String crntTimestamp = "";
 String urlStartTimestamp = "";
 String urlEndTimestamp = "";
@@ -19,11 +17,10 @@ SimpleDateFormat timestampFormat;
 SimpleDateFormat urlTimestampFormat;
 Date dateStart;
 Date dateEnd;
-Calendar peopleCalendar;
-Calendar windCalendar;
+Calendar calendar;
 
 int updateTimer = 0;
-int updateTime = 100; //update time in ms
+int updateTime = 1000; //update time in ms
 
 PImage building;
 PImage logo;
@@ -33,23 +30,19 @@ float blendAmt = 0;
 
 void setup() {
   size(1200, 800);
-  frameRate(120);
+  frameRate(30);
   rectMode(CORNER);
-  //colorMode(HSB, height, height, height);
-  
-  //sc = new SoundController();
-  //  sc.setGain("wind",0);
-  //  sc.setGain("people",0);
-  //  sc.setGain("temperature",0);
-    
-  //pg = createGraphics(1200, 800);
-  building = loadImage("building_white.png");
-  logo = loadImage("logo.png");
-
   ellipseMode(CENTER);
+  textSize(20);
+  textAlign(CENTER);
   background(255);
-  //frameRate(30.0);
+  noStroke();
 
+  // load images
+  building = loadImage("building_black.png");
+  logo = loadImage("logo_greenglow.png");
+
+  // setup calendars, dates and times
   timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   urlTimestampFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH'%3A'mm");
   dateStart = new Date();
@@ -61,91 +54,81 @@ void setup() {
   catch (ParseException e) {
     e.printStackTrace();
   }
+  calendar = Calendar.getInstance();
+  calendar.setTime(dateEnd);
+  urlEndTimestamp = urlTimestampFormat.format(calendar.getTime());
+  calendar.setTime(dateStart);
+  urlStartTimestamp = urlTimestampFormat.format(calendar.getTime());
+  crntTimestamp = timestampFormat.format(calendar.getTime());  
 
-  peopleCalendar = Calendar.getInstance();
-
-  peopleCalendar.setTime(dateEnd);
-  urlEndTimestamp = urlTimestampFormat.format(peopleCalendar.getTime());
-
-  peopleCalendar.setTime(dateStart);
-  urlStartTimestamp = urlTimestampFormat.format(peopleCalendar.getTime());
-  crntTimestamp = timestampFormat.format(peopleCalendar.getTime());  
-
-  //int x1 = 120;
-  //int y1 = 320;
-  //int x2 = 1020;
-  //int y2 = height-20;
-  pc = new PeopleController(urlStartTimestamp, urlEndTimestamp, 120, 320, 1020, height-20);
+  // setup controllers
+  ic = new InputController(this);  
+  sc = new SoundController();
+  pc = new PeopleController(urlStartTimestamp, urlEndTimestamp, 120, 320, 1020, height-50);
   wc = new WeatherController(urlStartTimestamp, urlEndTimestamp, 1000, 20);
   
+  // start the timer
   updateTimer = millis();
 }
 
 void draw() {  
-  //fill(153, 204, map(wc.temperature, 15,35,0,255), 10);
-  //float green = map(wc.temperature, 25, 35 ,255, 153);
-  //fill(255, green, 153, 10);
-  color from = color(204, 102, 0, 10);
-  color to = color(0, 102, 153, 10);
-  color interA = lerpColor(from, to, blendAmt);
-  fill(interA);
-  blendAmt += 0.01;
-  println(blendAmt);
-  noStroke();
-  rect(0, 0, width, height);
   
   if (millis() - updateTimer > updateTime) {
-    
+
     // update everything
     pc.update(crntTimestamp);
     wc.update(crntTimestamp);
-    //sc.setGain("people",map(pc.people.size(),0,200,0,1));
-    //sc.setGain("wind",map(wc.windSpeed,0,25,0,1));
-
+    sc.setGain("people",map(pc.nPeople,0,300,0,1));
+    sc.setGain("wind",map(wc.windSpeed,0,15,0,1));
+    sc.setGain("temperature",map(wc.temperature,15,35,0,1));
+    blendAmt += PI/24; // cycle between colours every hour
+  
     // add 5 minutes and update timestamp
-    peopleCalendar.add(Calendar.MINUTE, 5);
-    crntTimestamp = timestampFormat.format(peopleCalendar.getTime());
+    calendar.add(Calendar.MINUTE, 5);
+    crntTimestamp = timestampFormat.format(calendar.getTime());
     if (crntTimestamp.compareTo(endTimestamp) == 0) {
       crntTimestamp = startTimestamp;
-      peopleCalendar.setTime(dateStart);
+      calendar.setTime(dateStart);
     }
     
     // reset timer
     updateTimer = millis();
   }
   
-  //sc.setRate(map(updateTime,100,2000,1.5,1));
-  //updateTime = int(map(mouseY,0,height,100,2000));
-  
+  color from = color(255, 0, 0, 10);
+  color to = color(0, 0, 255, 10);
+  color interA = lerpColor(from, to, abs(sin(blendAmt)));
+  fill(interA);
+  rect(0, 0, width, height);
+
   // display wind
   wc.display();
   
   // add the building shape
-  //tint(bg);
   image(building, 0, 0);
-  // add the logo
-  //noTint();
+  // add the logo        
   image(logo, 900, 210);
   
   // display people
   pc.display();
 
   if (keyPressed) {
-   if (key == 'i') {
-    textSize(20);
+   if (key == ' ') {
+    updateTime = int(map(ic.loudness.analyze(),0,0.3,1000,10));
+    sc.setRate(map(updateTime,10,1000,1.5,1)); 
+   }  
+   else if (key == 'i') {
     fill(255); //we need to set a variable to be able to change the colour of the text relative to the colour of the building
-    rect(0,height-80,width, height-80);
+    rect(0,0, width, 80);
     fill(0);
-    text("Date & Time:", 170, height-50);
-    text(crntTimestamp, 120, height-20);
-    text("People inside:", width-300, height-50);
-    text(pc.people.size(), width-240, height-20);
-    text("Wind Speed:", width/2-150, height-50);
-    text(int(wc.windSpeed)+" km/h", width/2-120, height-20);
-    text("Wind Direction:", width/2+50, height-50);
-    
+    text("Date & Time", 0.1*width, 30);
+    text(crntTimestamp, 0.1*width, 60);
+    text("People inside", 0.3*width, 30);
+    text(pc.people.size(), 0.3*width, 60);
+    text("Wind Speed", 0.5*width, 30);
+    text(int(wc.windSpeed)+" km/h", 0.5*width, 60);
+    text("Wind Direction", 0.7*width, 30);
     String windDir = "";
-    
     if (wc.windDirection > 315 && wc.windDirection < 45) {
        windDir = "E";
     } 
@@ -158,9 +141,21 @@ void draw() {
     else if (wc.windDirection > 225 && wc.windDirection < 315) {
        windDir = "N"; 
     }
-    text(int(wc.windDirection)+"° ("+windDir+")", width/2+80, height-20);
-    text(int(wc.temperature)+"°C", width-80, height-20);
-
-   }
+    text(int(wc.windDirection)+"° ("+windDir+")", 0.7*width, 60);
+    text("Temperature", 0.9*width, 30);
+    text(int(wc.temperature)+"°C", 0.9*width, 60);
+   } 
   }
+  else {
+    fill(255,255,255,100);
+    text("Press i for info...", 0.1*width, 30);
+  }
+  fill(255,255,255,200);
+  text("Hold space and sing to speed up time...", 0.5*width, height - 20);
+}
+
+void keyReleased() {
+   if (key == ' ') {
+      updateTime = 1000; 
+   }
 }
