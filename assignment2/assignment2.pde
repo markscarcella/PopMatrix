@@ -203,7 +203,7 @@ void draw() {
     fill(0, 0, 0, 100);
     text("Hold i for info...", 0.1*width, 30);
     fill(255, 255, 255, 100);
-    text("Hold space and sing to speed up time...", 0.5*width, height - 20);
+    text("Hold f and sing to speed up time...", 0.5*width, height - 20);
   }
 }
 
