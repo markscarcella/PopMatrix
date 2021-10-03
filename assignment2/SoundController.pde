@@ -14,9 +14,6 @@ class SoundController {
   float windSpeed = 5.0;
   float people = 0.0;
   
-  String path = "/Volumes/GoogleDrive-111619245810311207262/My Drive/2021/IM/Assignment2/PopMatrix/assignment2/data/music/";
-  //String path = "/Users/andrewwagstaffe/Desktop/Masters/Interactive Media/Assessments/Popmatrix/PopMatrix/assignment2/data/music/"; // Andrew's testing path
-  
   SoundController() {
     ac = new AudioContext();
 
@@ -25,13 +22,13 @@ class SoundController {
 
   void loadSounds() {
 
-    String file1 = path+"01_temperature_Piano Loop.wav";
+    String file1 = dataPath("music")+"/01_temperature_Piano Loop.wav";
     SamplePlayer player1 = new SamplePlayer(ac, SampleManager.sample(file1));
 
-    String file2 = path+"School_Ambience_01.mp3";
+    String file2 = dataPath("music")+"/School_Ambience_01.mp3";
     SamplePlayer player2 = new SamplePlayer(ac, SampleManager.sample(file2));
 
-    String file3 = path+"03_wind_Strings Solo Loop.wav";
+    String file3 = dataPath("music")+"/03_wind_Strings Solo Loop.wav";
     SamplePlayer player3 = new SamplePlayer(ac, SampleManager.sample(file3));
 
     // set the envelope rates

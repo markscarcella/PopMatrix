@@ -248,7 +248,7 @@ void controlEvent(ControlEvent theEvent) {
 
   if (theEvent.isFrom(cp5.getController("loadDate"))) {
     startTimestamp = dp.date[2]+"-"+dp.date[1]+"-"+dp.date[0]+" 00:00:00";
-    endTimestamp = dp.date[2]+"-"+dp.date[1]+"-"+dp.date[0]+" 24:00:00";
+    endTimestamp = dp.date[2]+"-"+dp.date[1]+"-"+dp.date[0]+" 23:55:00";
 
     println(startTimestamp);
 
