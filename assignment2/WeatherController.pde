@@ -27,7 +27,7 @@ class WeatherController {
     for (int i=0; i<nParticles; i++) {    
       wind[i] = new Wind(
         random(width), // x position
-        random(height/2), // y position
+        random(height), // y position
         windSize, // wind width
         color(0, 0, random(0, 255))
         );
@@ -138,6 +138,8 @@ class Wind {
   float yRot;
   float windDirection;
   float windSpeed;
+  color cCold;
+  color cHot;
 
   Wind(float _xPos, float _yPos, float _windSize, color _c) {
     c = _c;
@@ -146,12 +148,14 @@ class Wind {
     windSize = _windSize;
     xRot = xPos+random(0, 100);
     yRot = yPos+random(0, 100);
+    cCold = color(12,12,140,random(255));
+    cHot = color(219,246,253,random(255));
   }
 
   void update(float _windDirection, float _windSpeed, float _temperature) {
     windDirection = map(_windDirection, 0, 360, -0.01, 0.01);
     windSpeed = map(_windSpeed, 0, 20, 0, 100);
-    c = color(255,255,map(_temperature, 35, 15, 0, 200)+random(50));
+    c = lerpColor(cCold,cHot,map(_temperature, 15, 35, 0, 1));
   }
 
   void display() {
